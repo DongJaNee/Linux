@@ -118,3 +118,7 @@ sudo dnf install slurm slurm-slurmd slurm-slurmctld munge
 |-----------|------|------|
 | **Head Node (또는 Master Node)** | 클러스터 관리, 작업 스케줄링, 사용자 로그인, 파일 공유, 모니터링 등 | - CPU보다는 안정성과 네트워크 I/O 중요<br>- 24/7 운영됨 |
 | **Compute Node** | 실제 연산, 시뮬레이션, 병렬 작업 처리 | - CPU 성능과 메모리 중요<br>- 대량 배치 처리 |
+
+
+redhat linux 9.5 iso download link 
+https://access.redhat.com/downloads/content/rhel
