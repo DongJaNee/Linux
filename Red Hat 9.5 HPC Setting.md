@@ -1,3 +1,27 @@
+# ✅ Red Hat HPC Head Node 구축 완료 내역 (RHEL 9.5 기준)
+
+## 📦 시스템 설치 및 초기 설정
+
+- 설치 버전: **Red Hat Enterprise Linux 9.5 (x86_64)**
+- 부팅 설정: **UEFI 모드**, **GPT 파티션**
+- 설치 ISO: `rhel-9.5-x86_64-dvd.iso`
+- 설치 환경: **Workstation**
+- 네트워크 연결: ✅ 성공
+
+---
+
+## 🔧 시스템 업데이트 및 개발 도구 설치
+
+```bash
+sudo dnf update -y
+sudo dnf groupinstall "Development Tools" -y
+
+
+sudo dnf install -y munge munge-libs
+sudo /usr/sbin/create-munge-key
+sudo systemctl enable munge --now
+```
+
 <!DOCTYPE html>
 <html lang="en">
 <body>
