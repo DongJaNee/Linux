@@ -4,6 +4,19 @@
 
 ## 1. Head Node 설정
 
+### 시스템 업데이트 및 개발 도구 설치
+
+```bash
+su - (root관리자로 접속)
+sudo dnf update -y
+sudo dnf groupinstall "Development Tools" -y
+
+
+sudo dnf install -y munge munge-libs
+sudo /usr/sbin/create-munge-key
+sudo systemctl enable munge --now
+```
+
 ### 1.1. 시스템 업데이트
 ```shell
 sudo dnf update -y
