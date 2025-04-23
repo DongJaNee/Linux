@@ -9,39 +9,34 @@
 sudo dnf update -y
 ```
 
-### 1.2. 필수 패키지 설치
-```shell
-sudo dnf install -y openmpi openmpi-devel lmod environment-modules munge munge-libs munge-devel slurm slurm-devel slurm-munge
-```
-
-### 1.3. Munge 키 생성
-```shell
-sudo /usr/sbin/create-munge-key
-```
-
-### 1.4. Munge 서비스 시작
+### 1.2. Munge 서비스 시작
 ```shell
 sudo systemctl start munge
 sudo systemctl enable munge
 ```
 
-### 1.5. Slurm 컨트롤러 설정
+### 1.3. Slurm 컨트롤러 설정
 ```shell
 sudo cp /etc/slurm/slurm.conf.example /etc/slurm/slurm.conf
 ```
 
-### 1.6. Slurm 컨트롤러 서비스 시작
+### 1.4. Slurm 컨트롤러 서비스 시작
 ```shell
 sudo systemctl start slurmctld
 sudo systemctl enable slurmctld
 ```
 
-### 1.7. Slurm 상태 확인
+### 1.5. Slurm 상태 확인
 ```shell
 sudo systemctl status slurmctld
 ```
 
 ## 2. Compute Node 설정
+
+### password 활성화
+```shell
+sudo setenforce 0
+```
 
 ### 2.1. Munge 키 복사
 ```shell
@@ -70,7 +65,7 @@ sudo systemctl status slurmd
 slurm.conf에서 노드 정보를 설정합니다. Head Node와 Compute Node에서 동일한 노드 이름을 사용해야 합니다. 예시:
 
 ```
-NodeName=localhost CPUs=4 RealMemory=8000 Sockets=1 CoresPerSocket=2 ThreadsPerCore=1 State=UNKNOWN
+NodeName=localhost CPUs=2 Sockets=1 CoresPerSocket=2 ThreadsPerCore State=UNKNOWN
 PartitionName=debug Nodes=localhost Default=YES MaxTime=INFINITE State=UP
 ```
 
@@ -88,7 +83,7 @@ Compute Node가 `UP` 상태여야 합니다.
 sbatch test_job.sh
 ```
 
-### 4.2. 배치 작업 스크립트 (test_job.sh)
+### 4.2. 배치 작업 스크립트 (nano test_job.sh)
 ```bash
 #!/bin/bash
 #SBATCH --job-name=test  
