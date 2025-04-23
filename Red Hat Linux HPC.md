@@ -103,6 +103,12 @@ squeue
 cat output.txt
 ```
 
+### 4.5 nano  test_job.sh에서 수정을 한 뒤 
+```
+sbatch test_job.sh에 제출을 하고난 뒤 
+cat output.txt 실행 
+```
+
 ## 5. 문제 해결
 
 ### 5.1. Munge 서비스 오류
