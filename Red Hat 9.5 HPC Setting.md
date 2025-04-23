@@ -110,20 +110,9 @@ sudo systemctl enable slurmd</code></pre>
   <h3>3.2. 배치 작업 스크립트 (test_job.sh)</h3>
   <div class="code-block">
     <button class="copy-btn" onclick="copyCode(this)">복사</button>
-    <pre id="code11"><code>#!/bin/bash
-
-      <h3>3.1. root 비밀번호가 입력되지 않을 때</h3>
-  <div class="code-block">
-    <button class="copy-btn" onclick="copyCode(this)">복사</button>
-    <pre id="code10"><code>sudo setenforce 0</code></pre>
+    <pre id="code11"><code>#!/bin/bash</code></pre>
   </div>
-#SBATCH --job-name=test
-#SBATCH --output=output.txt
-#SBATCH --time=00:01:00
 
-echo "Hello from compute node"
-hostname</code></pre>
-  </div>
 
   <h2>4. 시스템 상태 확인</h2>
 
