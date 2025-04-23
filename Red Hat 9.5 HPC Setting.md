@@ -53,6 +53,15 @@ sudo systemctl enable munge --now
     <button class="copy-btn" onclick="copyCode(this)">복사</button>
     <pre id="code4"><code>sudo systemctl start munge
 sudo systemctl enable munge</code></pre>
+
+  </div>
+
+  <h3>1. Slurm 설치</h3>
+  <div class="code-block">
+    <button class="copy-btn" onclick="copyCode(this)">복사</button>
+    <pre id="code5"><code>sudo dnf install -y slurm slurm-slurmd slurm-slurmctld</code></pre>
+  </div>
+
   </div>
 
   <h3>1.5. Slurm 컨트롤러 설정</h3>
@@ -101,6 +110,12 @@ sudo systemctl enable slurmd</code></pre>
   <div class="code-block">
     <button class="copy-btn" onclick="copyCode(this)">복사</button>
     <pre id="code11"><code>#!/bin/bash
+
+      <h3>3.1. root 비밀번호가 입력되지 않을 때</h3>
+  <div class="code-block">
+    <button class="copy-btn" onclick="copyCode(this)">복사</button>
+    <pre id="code10"><code>sudo setenforce 0</code></pre>
+  </div>
 #SBATCH --job-name=test
 #SBATCH --output=output.txt
 #SBATCH --time=00:01:00
