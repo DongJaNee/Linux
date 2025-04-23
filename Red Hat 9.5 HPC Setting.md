@@ -13,6 +13,7 @@
 ## 🔧 시스템 업데이트 및 개발 도구 설치
 
 ```bash
+su - (root관리자로 접속)
 sudo dnf update -y
 sudo dnf groupinstall "Development Tools" -y
 
