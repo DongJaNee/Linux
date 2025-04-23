@@ -84,13 +84,39 @@ sbatch test_job.sh
 ```
 
 ### 4.2. 배치 작업 스크립트 (nano test_job.sh)
-```bash
+```shell
 #!/bin/bash
-#SBATCH --job-name=test  
-#SBATCH --output=output.txt  
-#SBATCH --time=00:10:00  
-echo "Hello from compute node"  
+#SBATCH --job-name=test
+#SBATCH --output=output.txt
+#SBATCH --time=00:01:00
+#SBATCH --ntasks=1
+
+echo "===== 기본 시스템 정보 ====="
 hostname
+whoami
+date
+uptime
+
+echo "===== CPU 정보 ====="
+lscpu
+
+echo "===== 메모리 정보 ====="
+free -h
+
+echo "===== 디스크 정보 ====="
+df -h
+
+echo "===== 환경 변수 ====="
+env
+
+echo "===== 현재 작업 디렉토리 ====="
+pwd
+
+echo "===== 네트워크 인터페이스 ====="
+ip addr show
+
+echo "===== Slurm 관련 정보 ====="
+scontrol show job $SLURM_JOB_ID
 ```
 
 ### 4.3. 작업 상태 확인
