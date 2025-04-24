@@ -60,19 +60,32 @@ PermitRootLogin yes
 PasswordAuthentication yes
 ChallengeResponseAuthentication no
 UsePAM yes
+```
 ### password 활성화
 ```shell
 sudo setenforce 0
+```
+sudo dnf install -y slurm slurm-devel munge munge-libs
+
+### Munge 권한 및 서비스 설정 
+```shell
+sudo chown -R munge:munge /etc/munge
+sudo chmod 400 /etc/munge/munge.key
+sudo systemctl enable --now munge
+```
+
+### Slurm 디렉토리 생성 및 권한 설정 
+```shell
+sudo mkdir -p /var/spool/slurm
+sudo mkdir -p /var/log
+sudo touch /var/log/slurmd.log
+
+sudo chown -R slurm: /var/spool/slurm /var/log/slurmd.log
 ```
 
 ### 2.1. Munge 키 복사
 ```shell
 sudo scp /etc/munge/munge.key root@<compute-node-ip>:/etc/munge/
-```
-
-### 2.2. Slurm Daemon 설치
-```shell
-sudo dnf install -y slurm slurm-devel slurm-munge slurm-plugins
 ```
 
 ### 2.3. Slurm 서비스 시작
@@ -105,12 +118,7 @@ Compute Node가 `UP` 상태여야 합니다.
 
 ## 4. 작업 제출 및 상태 확인
 
-### 4.1. 테스트 작업 제출
-```shell
-sbatch test_job.sh
-```
-
-### 4.2. 배치 작업 스크립트 (nano test_job.sh)
+### 4.1. 배치 작업 스크립트 (nano test_job.sh)
 ```shell
 #!/bin/bash
 #SBATCH --job-name=test
@@ -144,6 +152,11 @@ ip addr show
 
 echo "===== Slurm 관련 정보 ====="
 scontrol show job $SLURM_JOB_ID
+```
+
+### 4.2. 테스트 작업 제출
+```shell
+sbatch test_job.sh
 ```
 
 ### 4.3. 작업 상태 확인
