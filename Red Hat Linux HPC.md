@@ -52,6 +52,14 @@ sudo systemctl status slurmctld
 
 ## 2. Compute Node 설정
 
+### head node config 설정 
+```shell
+sudo nano /etc/ssh/sshd_config
+
+PermitRootLogin yes
+PasswordAuthentication yes
+ChallengeResponseAuthentication no
+UsePAM yes
 ### password 활성화
 ```shell
 sudo setenforce 0
