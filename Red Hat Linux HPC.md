@@ -15,6 +15,11 @@ sudo dnf groupinstall "Development Tools" -y
 sudo dnf install -y munge munge-libs
 sudo /usr/sbin/create-munge-key
 sudo systemctl enable munge --now
+
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm (EPEL Repository 수동설치)
+sudo dnf clean all
+sudo dnf makecache (저장소 캐시 갱신)
+sudo curl -o /etc/yum.repos.d/slurm.repo https://download.schedmd.com/slurm/slurm.repo (slurm 저장소 추가)
 ```
 
 ### 1.1. 시스템 업데이트
@@ -30,6 +35,7 @@ sudo systemctl enable munge
 
 ### 1.3. Slurm 컨트롤러 설정
 ```shell
+sudo dnf install -y slurm slurm-slurmd slurm-slurmctld munge munge-libs
 sudo cp /etc/slurm/slurm.conf.example /etc/slurm/slurm.conf
 ```
 
