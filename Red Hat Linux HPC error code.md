@@ -1,145 +1,344 @@
-# HPC 구성 중 발생한 주요 오류와 해결 방법
+# Red Hat Linux HPC 설정 가이드
 
-## 1. `slurmctld` 시작 실패 (`Failed with result 'exit-code'`)
+이 가이드는 Red Hat Linux에서 HPC(High-Performance Computing) 환경을 설정하고 발생 가능한 오류를 해결하는 방법을 제공합니다.
 
-* **오류 코드**
-```
-slurmctld.service: Failed with result 'exit-code'
-```
+## Head Node 설정
 
-* **원인**
-  * `slurm.conf` 내 중복된 항목 또는 필수 설정 누락
+### 1. 시스템 업데이트 및 패키지 설치
 
-* **해결 방법**
 ```bash
-sudo nano /etc/slurm/slurm.conf
-```
-✅ 중복된 설정 제거 (예: `MpiDefault`, `ProctrackType`, `ReturnToService` 등 한 번만 작성)  
-✅ `ControlMachine`, `SlurmctldHost`, `NodeName`, `PartitionName` 등 필수 필드 설정 확인
+# root 계정으로 접속
+su -
 
-## 2. `no slurmctldHost defined` / `Unable to process configuration file`
+# 시스템 업데이트
+sudo dnf update -y
 
-* **오류 코드**
-```
-fatal: no slurmctldHost defined
+# 개발 도구 설치
+sudo dnf groupinstall "Development Tools" -y
+
+# Munge 설치 및 설정
+sudo dnf install -y munge munge-libs
+sudo /usr/sbin/create-munge-key
+sudo systemctl enable munge --now
+
+# EPEL 저장소 설치
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+sudo dnf clean all
+sudo dnf makecache  # 저장소 캐시 갱신
+
+# Slurm 저장소 추가
+sudo curl -o /etc/yum.repos.d/slurm.repo https://download.schedmd.com/slurm/slurm.repo
 ```
 
-* **해결 방법**
+### 2. SSH 설정
+
 ```bash
-# /etc/slurm/slurm.conf 내에 다음과 같은 줄 추가
-SlurmctldHost=head-node-hostname
-```
-
-## 3. Compute Node 연결 오류 (`ssh`, `scp`, `Permission denied`)
-
-* **오류 코드**
-```
-Permission denied (publickey,password,keyboard-interactive)
-Could not get shadow information for root
-```
-
-* **해결 방법**
-```bash
-# Head Node, Compute Node 모두에서 SELinux 비활성화
-sudo setenforce 0
-
-# root 비밀번호 재설정
-sudo passwd root
-
-# SSH 설정 허용
 sudo nano /etc/ssh/sshd_config
+```
+
+다음 설정으로 변경:
+```
 PermitRootLogin yes
 PasswordAuthentication yes
+ChallengeResponseAuthentication no
+UsePAM yes
+```
 
-# sshd 재시작
+```bash
+# SSH 서비스 재시작
 sudo systemctl restart sshd
+
+# 방화벽에서 SSH 허용
+sudo firewall-cmd --add-service=ssh --permanent
+sudo firewall-cmd --reload
+
+# SELinux 설정 변경 (필요시)
+sudo setenforce 0
 ```
 
-## 4. `sinfo` 명령어 오류 (`_parse_next_key: Parsing error`)
+### 3. Slurm 컨트롤러 설치 및 설정
 
-* **오류 코드**
-```
-_parse_next_key: Parsing error at unrecognized key: SlurmPort
-```
-
-* **해결 방법**
 ```bash
-# 잘못된 키를 slurm.conf에서 제거
+# Slurm 패키지 설치
+sudo dnf install -y slurm slurm-slurmd slurm-slurmctld munge munge-libs
+
+# 설정 파일 복사
+sudo cp /etc/slurm/slurm.conf.example /etc/slurm/slurm.conf
+```
+
+### 4. Slurm 설정 파일 수정
+
+```bash
 sudo nano /etc/slurm/slurm.conf
-# 존재하지 않는 키 (예: SlurmPort, SlurmSpoolDir 등)를 제거
 ```
 
-## 5. `squeue` 오류 (`UnavailableNodes: localhost`)
-
-* **오류 코드**
+기본 설정 예시:
 ```
-(ReqNodeNotAvail, UnavailableNodes:localhost)
+NodeName=localhost CPUs=2 Sockets=1 CoresPerSocket=2 ThreadsPerCore=1 State=UNKNOWN
+PartitionName=debug Nodes=localhost Default=YES MaxTime=INFINITE State=UP
 ```
 
-* **해결 방법**
+### 5. Slurm 서비스 시작
+
 ```bash
-# Node 상태 재설정
-sudo scontrol update NodeName=localhost State=RESUME
-
-# 또는 Node가 드레인된 상태일 때 수동으로 해제
-sudo scontrol update NodeName=localhost State=UNDRAIN
+sudo systemctl start slurmctld
+sudo systemctl enable slurmctld
+sudo systemctl status slurmctld
 ```
 
-## 6. `output.txt`가 생성되지 않음
+### 6. 설치된 패키지 확인
 
-* **오류 코드**
-```
-cat: output.txt: No such file or directory
-```
-
-* **해결 방법**
 ```bash
-# 테스트 스크립트 예시
+# Slurm 패키지 확인
+dnf list installed | grep slurm
+# 확인: slurm, slurm-devel, slurm-libs, slurm-slurmctld, slurm-slurmd
+
+# Munge 패키지 확인
+dnf list installed | grep munge
+# 확인: munge, munge-libs
+```
+
+### 7. Compute Node로 munge 키 복사
+
+```bash
+scp /etc/munge/munge.key root@<compute-node-ip>:/etc/munge/
+```
+
+### 8. Compute Node와 연결 확인
+
+```bash
+sinfo
+scontrol show nodes
+```
+
+## Compute Node 설정
+
+### 1. 시스템 업데이트 및 패키지 설치
+
+```bash
+# root 계정으로 접속
+su -
+
+# 시스템 업데이트
+sudo dnf update -y
+
+# 개발 도구 설치
+sudo dnf groupinstall "Development Tools" -y
+
+# EPEL 저장소 설치
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+sudo dnf clean all
+sudo dnf makecache  # 저장소 캐시 갱신
+
+# Slurm 저장소 추가
+sudo curl -o /etc/yum.repos.d/slurm.repo https://download.schedmd.com/slurm/slurm.repo
+```
+
+### 2. SSH 설정
+
+```bash
+sudo nano /etc/ssh/sshd_config
+```
+
+다음 설정으로 변경:
+```
+PermitRootLogin yes
+PasswordAuthentication yes
+ChallengeResponseAuthentication no
+UsePAM yes
+```
+
+```bash
+# SSH 서비스 재시작
+sudo systemctl restart sshd
+
+# 방화벽에서 SSH 허용
+sudo firewall-cmd --add-service=ssh --permanent
+sudo firewall-cmd --reload
+
+# SELinux 설정 변경 (필요시)
+sudo setenforce 0
+```
+
+### 3. 필수 패키지 설치
+
+```bash
+# 최소 필수 패키지 설치
+sudo dnf install -y slurm slurm-devel munge munge-libs
+```
+
+### 4. Head Node에서 복사한 Munge 키 설정
+
+```bash
+# 이미 Head Node에서 복사했다고 가정
+sudo chown -R munge:munge /etc/munge
+sudo chmod 400 /etc/munge/munge.key
+sudo systemctl enable --now munge
+```
+
+### 5. Slurm 디렉토리 생성 및 권한 설정
+
+```bash
+sudo mkdir -p /var/spool/slurm
+sudo mkdir -p /var/log
+sudo touch /var/log/slurmd.log
+sudo chown -R slurm: /var/spool/slurm /var/log/slurmd.log
+```
+
+### 6. Slurm 설정 파일 복사
+
+```bash
+# Head Node에서 설정 파일 복사
+scp root@<head-node-ip>:/etc/slurm/slurm.conf /etc/slurm/
+```
+
+### 7. Slurm 서비스 시작
+
+```bash
+sudo systemctl start slurmd
+sudo systemctl enable slurmd
+sudo systemctl status slurmd
+```
+
+## 작업 제출 및 확인 (Head Node에서)
+
+### 1. 테스트 작업 스크립트 생성
+
+```bash
 nano test_job.sh
+```
 
-# 내용
+```bash
 #!/bin/bash
 #SBATCH --job-name=test
 #SBATCH --output=output.txt
+#SBATCH --time=00:01:00
+#SBATCH --ntasks=1
+
+echo "===== 기본 시스템 정보 ====="
 hostname
+whoami
 date
+uptime
 
-# 제출
+echo "===== CPU 정보 ====="
+lscpu
+
+echo "===== 메모리 정보 ====="
+free -h
+
+echo "===== 디스크 정보 ====="
+df -h
+
+echo "===== 환경 변수 ====="
+env
+
+echo "===== 현재 작업 디렉토리 ====="
+pwd
+
+echo "===== 네트워크 인터페이스 ====="
+ip addr show
+
+echo "===== Slurm 관련 정보 ====="
+scontrol show job $SLURM_JOB_ID
+```
+
+### 2. 작업 제출 및 확인
+
+```bash
+# 작업 제출
 sbatch test_job.sh
+
+# 작업 상태 확인
+squeue
+
+# 결과 확인
+cat output.txt
 ```
 
-## 7. `Could not get shadow information for root`
+## 오류 해결 가이드
 
-* **오류 코드**
-```
-Could not get shadow information for root
-```
+### 패키지 설치 관련 오류
 
-* **해결 방법**
+**오류**: "일치하는 인수가 없습니다: munge-devel, slurm"
+
+**해결방법**:
 ```bash
-# SELinux 비활성화
-sudo setenforce 0
+# EPEL 저장소 수동 설치 확인
+sudo dnf install -y epel-release
+
+# 저장소 목록 확인
+dnf repolist
+
+# 최소 필수 패키지 설치
+sudo dnf install -y slurm slurm-devel munge munge-libs
 ```
 
-## 8. `Invalid node state specified`
+### SSH 연결 오류
 
-* **오류 코드**
-```
-error: Invalid node state specified
-```
+**오류**: "ssh: connect to host 192.168.0.xx port 22: Connection refused"
 
-* **해결 방법**
+**해결방법**:
+- SSH 설정 확인
+- 방화벽 설정 확인
+- SSH 서비스 재시작
+
+### Munge 키 관련 오류
+
+**오류**: "stat local '/etc/munge/munge.key': No such file or directory"
+
+**해결방법**:
 ```bash
-sudo scontrol update NodeName=localhost State=RESUME
+# Munge 키 생성 여부 확인
+ls -l /etc/munge/munge.key
+
+# 키가 없다면 생성
+sudo /usr/sbin/create-munge-key
+
+# 키 권한 설정
+sudo chmod 400 /etc/munge/munge.key
+sudo chown munge:munge /etc/munge/munge.key
 ```
 
-## 9. Storage 상태 확인 및 Slurm 상태 점검
+### Munge 인증 오류
 
-* **명령어**
+**오류**: Munge 인증 실패
+
+**해결방법**:
+- Head Node와 Compute Node의 munge.key가 동일한지 확인
+- 키 권한 설정이 올바른지 확인
+- Munge 서비스 재시작
+
+### Slurm 데몬 시작 오류
+
+**오류**: Slurm 데몬이 시작되지 않음
+
+**해결방법**:
 ```bash
-sinfo              # 클러스터 상태 확인
-squeue             # 작업 큐 확인
-sacct              # 작업 기록 확인
-scontrol show nodes # 노드 정보
-scontrol show partition
+# 로그 확인
+sudo journalctl -u slurmctld  # Head Node
+sudo journalctl -u slurmd     # Compute Node
+
+# 디렉토리 권한 확인
+sudo ls -la /var/spool/slurm
+sudo ls -la /var/log/slurmd.log
+
+# 필요시 권한 재설정
+sudo chown -R slurm: /var/spool/slurm /var/log/slurmd.log
+```
+
+### 노드 상태 오류
+
+**오류**: 노드가 DOWN 상태로 표시됨
+
+**해결방법**:
+```bash
+# 노드 상태 확인
+sinfo
+
+# 노드 수동 복구 시도
+sudo scontrol update nodename=<node-name> state=resume
+
+# 설정 파일 확인
+sudo cat /etc/slurm/slurm.conf
 ```
