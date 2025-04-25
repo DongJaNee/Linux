@@ -203,6 +203,16 @@ ssh 연결이 안될 경우, sshd_config에서 PermitRootLogin yes와 PasswordAu
 sudo systemctl restart sshd
 ```
 
+### 5.5 sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm status 404 오류
+1. EPEL설치
+```
+sudo dnf install -y epel-release
+```
+2. .rpm 파일 직접 다운로드
+```
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
+```
+
 ## 6. 결론
 
 이 가이드를 따라 설정한 후, Head Node와 Compute Node가 성공적으로 연결되고, Slurm을 통해 작업을 스케줄링하여 실행할 수 있습니다. 모든 오류는 journalctl 명령어로 로그를 확인하고 slurm.conf 파일을 점검하는 방식으로 해결할 수 있습니다.
