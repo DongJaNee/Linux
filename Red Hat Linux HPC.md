@@ -1,6 +1,4 @@
-# Slurm HPC 환경 설정 가이드
-
-이 가이드는 Head Node와 Compute Node를 설정하여 Slurm 클러스터를 구축하는 방법을 다룹니다. 각 단계별로 발생할 수 있는 오류를 피하기 위한 조언도 포함되어 있습니다.
+# Red Hat Linux HPC 설정 
 
 ## 1. Head Node 설정
 
@@ -51,6 +49,25 @@ sudo systemctl status slurmctld
 ```
 
 ## 2. Compute Node 설정
+
+### 시스템 업데이트 및 개발 도구 설치
+
+```bash
+su - (root관리자로 접속)
+sudo dnf update -y
+sudo dnf groupinstall "Development Tools" -y
+
+
+sudo dnf install -y munge munge-libs
+sudo /usr/sbin/create-munge-key
+sudo systemctl enable munge --now
+
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm (EPEL Repository 수동설치)
+sudo dnf clean all
+sudo dnf makecache (저장소 캐시 갱신)
+sudo curl -o /etc/yum.repos.d/slurm.repo https://download.schedmd.com/slurm/slurm.repo (slurm 저장소 추가)
+```
+
 
 ### head node config 설정 
 ```shell
