@@ -1,23 +1,8 @@
 [ark@localhost ~]$ su -
 암호:
-su: 인증 실패
-[ark@localhost ~]$ 
-[ark@localhost ~]$ 
-[ark@localhost ~]$ 
-[ark@localhost ~]$ sudo systemctl restart slurmctl
-
-로컬 시스템 관리자에게 일반적인 지침을 받았으리라 믿습니다.
-보통 세가지로 요약합니다:
-
-    #1) 타인의 사생활을 존중하십시오.
-    #2) 입력하기 전에 한 번 더 생각하십시오.
-    #3) 막강한 힘에는 상당한 책임이 뒤따릅니다.
-
-ark은(는) sudoers 설정 파일에 없습니다.  이 시도를 보고합니다.
-[ark@localhost ~]$ su -
-암호:
 [root@localhost ~]# sudo systemctl restart slurmctl
 Failed to restart slurmctl.service: Unit slurmctl.service not found.
+
 [root@localhost ~]# ip a
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -31,11 +16,8 @@ Failed to restart slurmctl.service: Unit slurmctl.service not found.
        valid_lft 5167sec preferred_lft 5167sec
     inet6 fe80::56bf:64ff:fe6d:2e6b/64 scope link noprefixroute 
        valid_lft forever preferred_lft forever
-[root@localhost ~]# ^C
-[root@localhost ~]# ^C
 [root@localhost ~]# sudo systemctl restart slrumctld
 Failed to restart slrumctld.service: Unit slrumctld.service not found.
-[root@localhost ~]# ^C
 [root@localhost ~]# sudo systemctl restart slurmctld
 [root@localhost ~]# ping 192.168.0.37
 PING 192.168.0.37 (192.168.0.37) 56(84) bytes of data.
@@ -48,6 +30,7 @@ rtt min/avg/max/mdev = 0.302/0.456/0.611/0.154 ms
 [root@localhost ~]# sbatch test_job.sh
 sbatch: error: Batch job submission failed: Invalid argument
 [root@localhost ~]# nano test_job.sh
+
 [root@localhost ~]# sudo systemctl start slurmd
 [root@localhost ~]# sudo systemctl enable slurmd
 s[root@localhost ~]# sudo systemctl stat
