@@ -145,6 +145,7 @@ sudo nano /etc/ssh/sshd_config
 PermitRootLogin yes
 PasswordAuthentication yes
 ChallengeResponseAuthentication no
+UsePAM yes
 ```
 
 ```bash
