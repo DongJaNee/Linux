@@ -15,6 +15,8 @@ sudo dnf update -y
 
 # 개발 도구 설치
 sudo dnf groupinstall "Development Tools" -y
+sudo subscription-manager register --username [당신의 Red Hat ID] --password [비밀번호]
+sudo subscription-manager attach --auto
 
 # Munge 설치 및 설정
 sudo dnf install -y munge munge-libs
@@ -124,6 +126,8 @@ sudo dnf update -y
 
 # 개발 도구 설치
 sudo dnf groupinstall "Development Tools" -y
+sudo subscription-manager register --username [당신의 Red Hat ID] --password [비밀번호]
+sudo subscription-manager attach --auto
 
 # EPEL 저장소 설치
 sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
