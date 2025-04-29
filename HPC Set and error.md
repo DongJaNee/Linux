@@ -17,6 +17,7 @@ sudo dnf update -y
 sudo dnf groupinstall "Development Tools" -y
 sudo subscription-manager register --username [당신의 Red Hat ID] --password [비밀번호]
 sudo subscription-manager attach --auto
+sudo dnf install openmpi openmpi-devel environment-modules 
 
 # Munge 설치 및 설정
 sudo dnf install -y munge munge-libs
@@ -126,7 +127,6 @@ sudo dnf update -y
 
 # 개발 도구 설치
 sudo dnf groupinstall "Development Tools" -y
-sudo subscription-manager register --username [당신의 Red Hat ID] --password [비밀번호]
 sudo subscription-manager attach --auto
 
 # EPEL 저장소 설치
@@ -136,6 +136,9 @@ sudo dnf makecache  # 저장소 캐시 갱신
 
 # Slurm 저장소 추가
 sudo curl -o /etc/yum.repos.d/slurm.repo https://download.schedmd.com/slurm/slurm.repo
+
+# mpi 설치
+sudo dnf install openmpi environment-modules
 ```
 
 ### 2. SSH 설정
