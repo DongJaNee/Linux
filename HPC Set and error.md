@@ -132,6 +132,16 @@ sudo dnf makecache  # 저장소 캐시 갱신
 
 # Slurm 저장소 추가
 sudo curl -o /etc/yum.repos.d/slurm.repo https://download.schedmd.com/slurm/slurm.repo
+
+# Slurmd 데몬 설치
+sudo dnf install slurm-slurmd
+sudo dnf install epel-release 
+sudo dnf update
+
+# Slurmd 데몬 reload
+sudo systemctl daemon-reload
+sudo systemctl enable slurmd
+sudo systemctl start slurmd
 ```
 
 ### 2. SSH 설정
@@ -282,6 +292,12 @@ sudo dnf install -y slurm slurm-devel munge munge-libs
 - SSH 설정 확인
 - 방화벽 설정 확인
 - SSH 서비스 재시작
+
+
+### 잘못된 문장 찾기 
+```bash
+sudo sshd -t
+```
 
 ### Munge 키 관련 오류
 
