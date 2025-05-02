@@ -29,6 +29,12 @@ sudo hostnamectl set-hostname headnode
 ### 3. SSH 설정
 ```bash
 sudo systemctl enable sshd --now
+
+
+sudo nano /etc/ssh/sshd_config 
+PermitRootLogin yes (# 제거)
+PasswordAuthentication yes (# 제거)
+
 ```
 
 ### 4. Munge 설정
@@ -140,6 +146,9 @@ sudo systemctl enable --now slurmctld
 
 ### 1. 시스템 준비
 ```bash
+sudo subscription-manager repos --enable codeready-builder-for-rhel-9-$(uname -m)-rpms (epel download)
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm (epel download)
+
 sudo dnf install -y epel-release
 sudo dnf install -y munge munge-libs munge-devel slurm slurm-slurmd
 ```
@@ -158,7 +167,17 @@ sudo hostnamectl set-hostname computenode
 ### 3. SSH 설정
 ```bash
 sudo systemctl enable sshd --now
+
+sudo firewall-cmd --add-service=ssh --permanent (방화벽 열기)
+sudo firewall-cmd --reload (방화벽 열기)
 ```
+
+```bash
+sudo nano /etc/ssh/sshd_config 
+PermitRootLogin yes (# 제거)
+PasswordAuthentication yes (# 제거)
+
+sudo systemctl restart sshd (sshd 데몬 재시작)
 
 ### 4. Munge 키 복사 및 설정
 ```bash
@@ -179,6 +198,11 @@ scp /etc/slurm/slurm.conf root@192.168.0.37:/etc/slurm/slurm.conf
 
 ### 6. Slurm 디렉토리 준비
 ```bash
+sudo groupadd slurm (slurm 그룹생성)
+sudo useradd -g slurm slurm (slurm 해당그룹에 추가 생성)  
+
+
+
 sudo mkdir -p /var/spool/slurmd
 sudo chown slurm:slurm /var/spool/slurmd
 sudo touch /var/log/slurmd.log
@@ -237,6 +261,7 @@ sbatch test_job.sh
 cat result.txt
 ```
 
+**※Cat 명령어가 실행이 안되거나 hostname 이 다르면 hostname을 맞추고 sudo reboot로 서버 reboot시키고 munge와 slurm 재실행**
 ## ✅ 참고
 * `scontrol ping` 으로 노드 연결 상태 확인 가능
 * 모든 설정 후 방화벽, SELinux가 차단하고 있는지 여부 확인 필
