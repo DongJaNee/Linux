@@ -249,11 +249,23 @@ scontrol show nodes
 Slurm 테스트 스크립트 (test_job.sh)
 ```bash
 #!/bin/bash
-#SBATCH --job-name=testjob
-#SBATCH --output=result.txt
+#SBATCH --job-name=gpu_test
+#SBATCH --output=/home/slurm/gpu_result.txt
+#SBATCH --error=/home/slurm/gpu_error.txt
 #SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
+#SBATCH --time=00:02:00
+#SBATCH --partition=debug
+#SBATCH --gres=gpu:1  # GPU 1개 요청 (Slurm에 GRES 설정이 있어야 함)
 
+echo "=== GPU 테스트 시작 ==="
 hostname
+date
+echo ""
+echo "=== GPU 정보 ==="
+nvidia-smi
+
 ```
 
 ```bash
