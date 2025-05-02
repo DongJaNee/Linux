@@ -8,6 +8,9 @@
 
 ### 1. 시스템 준비
 ```bash
+sudo subscription-manager repos --enable codeready-builder-for-rhel-9-$(uname -m)-rpms (epel download)
+sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm (epel download)
+
 sudo dnf install -y epel-release
 sudo dnf install -y munge munge-libs munge-devel slurm slurm-slurmd slurm-slurmctld
 ```
@@ -68,6 +71,12 @@ NodeName=computenode NodeAddr=192.168.0.37 CPUs=2 State=UNKNOWN
 PartitionName=debug Nodes=computenode Default=YES MaxTime=INFINITE State=UP
 ```
 
+Slurm 사용자 및 그룹 생성
+```bash
+sudo useradd -r -c "Slurm user" -s /sbin/nologin slurm
+sudo chown slurm:slurm /var/log/slurmctld.log
+```
+
 Slurm 디렉토리 준비
 ```bash
 sudo mkdir -p /var/spool/slurmctld
@@ -75,8 +84,54 @@ sudo chown slurm:slurm /var/spool/slurmctld
 sudo touch /var/log/slurmctld.log
 sudo chown slurm:slurm /var/log/slurmctld.log
 ```
+### 7. Slurmctld Daemon 설정 
+```bash
+sudo vi /etc/systemd/system/slurmctld.service
+```
+```bash
+[Unit]
+Description=Slurm controller daemon
+After=network.target munge.service
 
-### 6. Slurm 서비스 실행
+[Service]
+Type=simple
+User=slurm
+ExecStart=/usr/sbin/slurmctld -D
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+### 8. Slurmd Daemon 설정 
+```bash
+sudo vi /etc/systemd/system/slurmd.service
+```
+```bash
+[Unit]
+Description=Slurm node daemon
+After=network.target munge.service
+
+[Service]
+Type=simple
+User=root
+ExecStart=/usr/sbin/slurmd -D
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+```적용 및 실행
+sudo systemctl daemon-reload
+sudo systemctl enable --now slurmctld   # Head node만
+sudo systemctl enable --now slurmd      # 모든 노드에서
+```
+```상태 확인
+systemctl status slurmctld
+systemctl status slurmd
+```
+
+### 9. Slurm 서비스 실행
 ```bash
 sudo systemctl enable --now slurmctld
 ```
