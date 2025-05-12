@@ -26,7 +26,7 @@ sudo hostnamectl set-hostname headnode
 192.168.0.37 computenode
 ```
 
-### 3. SSH 설정
+### 3. SSH 설정 (암호화) 
 ```bash
 sudo systemctl enable sshd --now
 
