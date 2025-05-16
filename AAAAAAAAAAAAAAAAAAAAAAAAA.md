@@ -149,7 +149,7 @@ SSH를 통해 컴퓨트 노드에 접속하여 아래 명령어를 실행합니�
 bash
 
 # 로그인
-ssh compute1
+ssh computenode
 
 # 필요한 패키지 설치
 sudo dnf clean all
@@ -171,7 +171,7 @@ rpm -qa | grep openmpi
 
 # 환경 설정
 cat >> ~/.bashrc << 'EOF'
-
+```
 # OpenMPI 설정
 module load mpi/openmpi-x86_64
 EOF
@@ -183,7 +183,7 @@ which mpirun
 
 # 마스터 노드로 돌아가기
 exit
-
+```
 테스트 단계 (마스터 노드에서)
 1. 기본 MPI 실행 테스트
 
@@ -222,6 +222,7 @@ bash
 
 # 배치 작업 스크립트 생성
 cat > job.slurm << 'EOF'
+```
 #!/bin/bash
 #SBATCH --job-name=mpi_test
 #SBATCH --nodes=2
@@ -242,7 +243,7 @@ srun ./mpi_hello
 # 작업 종료 정보 출력
 echo "Job completed at $(date)"
 EOF
-
+```
 # 작업 제출
 sbatch job.slurm
 
@@ -267,134 +268,11 @@ sudo firewall-cmd --list-all
 sudo firewall-cmd --permanent --add-port=1024-65535/tcp
 sudo firewall-cmd --reload
 
-2. SSH 설정 최적화
-
-bash
-
-# ~/.ssh/config 파일 설정 (필요시)
-cat > ~/.ssh/config << 'EOF'
-Host compute1
-    StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
-    LogLevel ERROR
-EOF
-
-chmod 600 ~/.ssh/config
-
-3. OpenMPI 고급 설정
-
-bash
-
-# OpenMPI 고급 설정 (TCP 기반)
-cat > ~/.openmpi.conf << 'EOF'
-# OpenMPI 설정
-# TCP 인터페이스 설정
-btl_tcp_if_include=eth0
-EOF
-
-# 실행 시 적용
-mpirun --mca btl_tcp_if_include eth0 -np 4 --hostfile hostfile ./mpi_hello
-
-4. Slurm과 OpenMPI 통합 확인 스크립트
-
-bash
-
-cat > ~/check_integration.sh << 'EOF'
-#!/bin/bash
-
-echo "Checking Slurm and OpenMPI integration..."
-
-# Slurm 상태 확인
-echo "Slurm status:"
-sinfo
-
-# OpenMPI 버전 확인
-echo -e "\nOpenMPI version:"
-mpirun --version
-
-# Slurm과 OpenMPI 통합 테스트
-echo -e "\nTesting Slurm with OpenMPI:"
-srun -N1 -n1 mpirun --version
-
-echo -e "\nTest complete."
-EOF
-
-chmod +x ~/check_integration.sh
-~/check_integration.sh
-
-최종 검증 및 성능 테스트
-
-bash
-
-# 간단한 성능 테스트
-cat > ~/mpi_ring.c << 'EOF'
-#include <mpi.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-int main(int argc, char** argv) {
-    int rank, size, token;
-    MPI_Status status;
-    double start_time, end_time;
-    
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    
-    // 시작 시간 기록
-    start_time = MPI_Wtime();
-    
-    // 링 패턴으로 토큰 전송
-    token = 0;
-    if (rank == 0) {
-        token = 42;
-        printf("Process 0 sending token %d to process 1\n", token);
-        MPI_Send(&token, 1, MPI_INT, 1, 0, MPI_COMM_WORLD);
-        MPI_Recv(&token, 1, MPI_INT, size-1, 0, MPI_COMM_WORLD, &status);
-        printf("Process 0 received token %d from process %d\n", token, size-1);
-    } else {
-        MPI_Recv(&token, 1, MPI_INT, rank-1, 0, MPI_COMM_WORLD, &status);
-        printf("Process %d received token %d from process %d\n", 
-               rank, token, rank-1);
-        
-        // 토큰 증가
-        token++;
-        
-        // 다음 프로세스로 전송 (마지막은 0으로)
-        int next = (rank + 1) % size;
-        printf("Process %d sending token %d to process %d\n", 
-               rank, token, next);
-        MPI_Send(&token, 1, MPI_INT, next, 0, MPI_COMM_WORLD);
-    }
-    
-    // 끝 시간 기록
-    end_time = MPI_Wtime();
-    
-    // 시간 출력
-    if (rank == 0) {
-        printf("Total time: %f seconds\n", end_time - start_time);
-    }
-    
-    MPI_Finalize();
-    return 0;
-}
-EOF
-
 # 컴파일
 mpicc -o mpi_ring mpi_ring.c
 
 # 성능 테스트 실행
 srun -N2 -n4 ./mpi_ring
-
-이 가이드를 따라하시면 OpenMPI가 성공적으로 구축되고 Slurm과 통합되어 작동할 것입니다. 각 단계에서 에러가 발생할 경우 바로 해결할 수 있도록 확인 단계를 포함했습니다. 실제 환경에 따라 일부 경로나 설정을 조정해야 할 수 있습니다.
-
-4번   MpiDefault=pmi2 라고 나오는데 
-if ~ 설정 추가해야합니까?
-편집
-
-MpiDefault=pmi2가 이미 slurm.conf 파일에 설정되어 있다면, 추가 설정이 필요하지 않습니다. 이미 Slurm과 OpenMPI의 통합을 위한 필요한 설정이 되어 있는 상태입니다.
-
-해당 코드 블록은 조건부 설정으로, 만약 MpiDefault=pmi2 설정이 없을 경우에만 추가하라는 의미입니다:
 
 bash
 
@@ -463,19 +341,12 @@ bash
 
 mpirun --allow-run-as-root -np 2 ./mpi_hello
 
-주의사항
-
-방법 2와 방법 3은 임시 해결책으로만 사용하세요. 프로덕션 환경에서는 방법 1과 같이 일반 사용자로 MPI 작업을 실행하는 것이 안전합니다. root로 실행하면 실수로 인해 시스템에 심각한 손상을 줄 수 있습니다.
-
-또한, Slurm을 통해 작업을 제출할 때에도 일반 사용자 계정으로 제출하는 것이 좋습니다:
-
 bash
 
 # 일반 사용자로 Slurm 작업 제출
 su - mpiuser
 srun -N2 -n4 ./mpi_hello
 
-HPC 환경에서는 보통 관리자가 시스템을 설정하고, 사용자들은 일반 계정으로 작업을 제출하는 방식으로 운영합니다.
 
 [mpiuser@headnode ~]$ mpirun -np 4 --hostfile hostfile ./mpi_hello
 Ignoring PCI device with non-16bit domain.
@@ -526,42 +397,6 @@ bash
 # 로컬에서만 실행
 mpirun -np 2 ./mpi_hello
 
-4. 디버깅 정보 확인
-
-OpenMPI에 디버깅 정보를 출력하도록 설정:
-
-bash
-
-# 상세 디버깅 정보로 실행
-mpirun --verbose -np 4 -H headnode:2,computenode:2 ./mpi_hello
-
-5. SSH 디버깅 정보 확인
-
-SSH 연결 문제를 확인하기 위해:
-
-bash
-
-# SSH 디버깅 모드로 연결 테스트
-ssh -v computenode hostname
-
-6. OpenMPI 설정 변경
-
-OpenMPI가 사용하는 통신 방식을 변경해 봅니다:
-
-bash
-
-# TCP만 사용하도록 설정
-mpirun --mca btl tcp,self -np 4 -H headnode:2,computenode:2 ./mpi_hello
-
-# 또는 SSH 모듈 사용 (원격 시작 방식 변경)
-mpirun --mca plm_rsh_agent ssh -np 4 -H headnode:2,computenode:2 ./mpi_hello
-
-7. 호스트 이름 확인
-
-hostfile과 명령어에서 사용한 computenode 이름이 실제 호스트 이름과 일치하는지 확인:
-
-bash
-
 # 호스트 이름 확인
 hostname
 ssh computenode hostname
@@ -569,24 +404,7 @@ ssh computenode hostname
 # /etc/hosts 파일 확인
 cat /etc/hosts
 
-8. Slurm을 통한 실행
-
-Slurm을 사용하여 실행해보는 것도 좋은 방법입니다:
-
-bash
-
-# Slurm을 통한 실행
-srun -N2 -n4 ./mpi_hello
-
-9. 타임아웃 설정
-
-연결 타임아웃을 늘려봅니다:
-
-bash
-
-mpirun --mca plm_rsh_no_tree_spawn 1 --mca orte_startup_timeout 100 -np 4 -H headnode:2,computenode:2 ./mpi_hello
-
-10. 방화벽 확인
+# 방화벽 확인
 
 방화벽이 MPI 통신을 차단하고 있는지 확인:
 
@@ -598,19 +416,7 @@ sudo systemctl status firewalld
 # 필요시 방화벽 비활성화하여 테스트
 sudo systemctl stop firewalld
 
-11. OpenMPI의 버전 확인 및 일관성 검사
-
-두 노드의 OpenMPI 버전이 동일한지 확인:
-
-bash
-
-# 로컬 버전 확인
-mpirun --version
-
-# 원격 버전 확인
-ssh computenode "mpirun --version"
-
-12. 사용자 권한 확인
+# 사용자 권한 확인
 
 computenode에서도 mpiuser 사용자가 제대로 설정되었는지 확인:
 
@@ -621,12 +427,3 @@ ssh computenode "id mpiuser"
 
 # 필요시 원격 노드에 사용자 생성
 ssh root@computenode "useradd -m mpiuser && passwd mpiuser"
-
-이 단계들을 차례로 진행해보시고, 어떤 단계에서 문제가 해결되는지 확인해 보세요. PCI 장치 경고는 특별한 문제가 아니라 하드웨어 관련 정보 메시지이므로, 실행되지 않는 주요 원인은 네트워크 연결, SSH 설정, 권한 문제 중 하나일 가능성이 높습니다.
-
-#include
-
-Our most intelligent model yet 자세히 알아보기
-콘텐츠
-아직 추가된 콘텐츠가 없습니다.
-Claude와 함께 이미지, PDF, 문서, 스프레드시트 등을 추가하여 콘텐츠를 요약하고 분석하며 검색할 수 있습니다.
