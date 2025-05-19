@@ -652,7 +652,6 @@ sbatch job.slurm
 
 cat /home/mpiuser/shared/mpi_job_*.out
 
-
 나의 말:
 [root@computenode shared]# sbatch job.slurm
 sbatch: error: Unable to open file job.slurm
@@ -758,12 +757,6 @@ cat mpi_job_*.out
 합계 28
 -rw-------. 1 root root 1383  5월 13 15:44 anaconda-ks.cfg
 -rw-r--r--. 1 root root   42  5월 15 14:14 hostfile
--rw-r--r--. 1 root root  321  5월 16 16:06 job.slurm
--rw-r--r--. 1 root root  542  5월 15 13:48 mpi_hello.c
-drwxr-xr-x. 2 root root   58  5월 16 14:35 mpi_test
--rw-r--r--. 1 root root   12  1월 28 09:17 nodes
--rwxr-xr-x. 1 root root   43  5월 15 13:47 openmpi.sh
--rw-r--r--. 1 root root  155  5월 15 15:58 test_job.sh
 
 좋습니다. 현재 job.slurm, mpi_hello.c 등이 모두 /root 디렉터리에 있습니다. 하지만 Slurm 작업에서 오류가 발생한 이유는 다음과 같습니다:
 
@@ -789,26 +782,6 @@ sbatch job.slurm
 4. 작업 완료 후 결과 확인
 
 cat /home/mpiuser/shared/mpi_job_*.out
-
-만약 mpi_hello.c에서 출력이 안 나오는 경우를 대비해, 아래는 간단한 MPI 예제입니다:
-```
- mpi_hello.c
-#include <mpi.h>
-#include <stdio.h>
-
-int main(int argc, char** argv) {
-    MPI_Init(&argc, &argv);
-
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-    printf("Hello from rank %d out of %d processors\n", rank, size);
-
-    MPI_Finalize();
-    return 0;
-}
-```
 
 컴파일 : mpicc -o mpi_hello mpi_hello.c
 
@@ -864,15 +837,6 @@ mpirun has detected an attempt to run as root.
 Running as root is *strongly* discouraged as any mistake (e.g., in
 defining TMPDIR) or bug can result in catastrophic damage to the OS
 file system, leaving your system in an unusable state.
-
-We strongly suggest that you run mpirun as a non-root user.
-
-You can override this protection by adding the --allow-run-as-root option
-to the cmd line or by setting two environment variables in the following way:
-the variable OMPI_ALLOW_RUN_AS_ROOT=1 to indicate the desire to override this
-protection, and OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 to confirm the choice and
-add one more layer of certainty that you want to do so.
-We reiterate our advice against doing so - please proceed at your own risk.
 --------------------------------------------------------------------------
 
 방법 1: --allow-run-as-root 옵션 사용
@@ -893,34 +857,11 @@ mpirun -np 4 ./my_program
 MPI 프로그램을 다시 실행: mpirun -np 4 ./my_program
 
 나의 말:
-[root@headnode ~]# mpirun -np 4 ./my_program
-Ignoring PCI device with non-16bit domain.
-Pass --enable-32bits-pci-domain to configure to support such devices
-(warning: it would break the library ABI, don't enable unless really needed).
-Ignoring PCI device with non-16bit domain.
-Pass --enable-32bits-pci-domain to configure to support such devices
-(warning: it would break the library ABI, don't enable unless really needed).
-Ignoring PCI device with non-16bit domain.
-Pass --enable-32bits-pci-domain to configure to support such devices
-(warning: it would break the library ABI, don't enable unless really needed).
-Ignoring PCI device with non-16bit domain.
-Pass --enable-32bits-pci-domain to configure to support such devices
-(warning: it would break the library ABI, don't enable unless really needed).
-Ignoring PCI device with non-16bit domain.
-Pass --enable-32bits-pci-domain to configure to support such devices
-(warning: it would break the library ABI, don't enable unless really needed).
-Hello, World! I am process 2
-Hello, World! I am process 1
-Hello, World! I am process 3
-Hello, World! I am process 0
-
-나의 말:
 [root@computenode ~]# ls mpi_job_*.out
 mpi_job_11.out  mpi_job_13.out  mpi_job_9.out
 [root@computenode ~]# cat mpi_job_11.out
 Job started at 2025. 05. 16. (금) 15:47:20 KST
 Running on computenode
-slurmstepd: error: execve(): /root/./mpi_hello: No such file or directory
 slurmstepd: error: execve(): /root/./mpi_hello: No such file or directory
 slurmstepd: error: execve(): /root/./mpi_hello: No such file or directory
 srun: error: computenode: tasks 0-1: Exited with exit code 2
@@ -1163,15 +1104,6 @@ mpirun has detected an attempt to run as root.
 Running as root is *strongly* discouraged as any mistake (e.g., in
 defining TMPDIR) or bug can result in catastrophic damage to the OS
 file system, leaving your system in an unusable state.
-
-We strongly suggest that you run mpirun as a non-root user.
-
-You can override this protection by adding the --allow-run-as-root option
-to the cmd line or by setting two environment variables in the following way:
-the variable OMPI_ALLOW_RUN_AS_ROOT=1 to indicate the desire to override this
-protection, and OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 to confirm the choice and
-add one more layer of certainty that you want to do so.
-We reiterate our advice against doing so - please proceed at your own risk.
 --------------------------------------------------------------------------
 ChatGPT의 말:
 
@@ -1193,26 +1125,3 @@ mpirun -np 4 ./my_program
 해당 사용자로 로그인: su - mpiuser
 
 MPI 프로그램을 다시 실행: mpirun -np 4 ./my_program
-
-나의 말:
-[root@headnode ~]# mpirun -np 4 ./my_program
-Ignoring PCI device with non-16bit domain.
-Pass --enable-32bits-pci-domain to configure to support such devices
-(warning: it would break the library ABI, don't enable unless really needed).
-Ignoring PCI device with non-16bit domain.
-Pass --enable-32bits-pci-domain to configure to support such devices
-(warning: it would break the library ABI, don't enable unless really needed).
-Ignoring PCI device with non-16bit domain.
-Pass --enable-32bits-pci-domain to configure to support such devices
-(warning: it would break the library ABI, don't enable unless really needed).
-Ignoring PCI device with non-16bit domain.
-Pass --enable-32bits-pci-domain to configure to support such devices
-(warning: it would break the library ABI, don't enable unless really needed).
-Ignoring PCI device with non-16bit domain.
-Pass --enable-32bits-pci-domain to configure to support such devices
-(warning: it would break the library ABI, don't enable unless really needed).
-Hello, World! I am process 2
-Hello, World! I am process 1
-Hello, World! I am process 3
-Hello, World! I am process 0
-[root@headnode ~]# 
