@@ -50,7 +50,14 @@ JOBID PARTITION     NAME     USER ST       TIME  NODES NODELIST(REASON)
 
 **증상:**
 ```
+Job started at 2025. 05. 16. (금) 15:47:20 KST
+Running on computenode
 slurmstepd: error: execve(): /root/./mpi_hello: No such file or directory
+slurmstepd: error: execve(): /root/./mpi_hello: No such file or directory
+srun: error: computenode: tasks 0-1: Exited with exit code 2
+slurmstepd: error: execve(): /root/./mpi_hello: No such file or directory
+srun: error: headnode: tasks 2-3: Exited with exit code 2
+Job completed at 2025. 05. 16. (금) 15:47:20 KST
 ```
 
 **해결 방법:**
@@ -91,7 +98,7 @@ slurmstepd: error: execve(): /root/./mpi_hello: No such file or directory
    mpicc -o mpi_hello mpi_hello.c
    ```
 
-#### B. 공유 파일 시스템 설정
+#### B. 공유 파일 시스템 설정 (NFS 사용)
 
 1. NFS 공유 디렉토리에 실행 파일 이동
    ```bash
@@ -107,6 +114,39 @@ slurmstepd: error: execve(): /root/./mpi_hello: No such file or directory
    ls /home/mpiuser/shared/mpi_hello
    ```
 
+3. 공유 디렉토리용 작업 스크립트 생성
+   ```bash
+   cat > /home/mpiuser/shared/job.slurm << 'EOF'
+   #!/bin/bash
+   #SBATCH --job-name=mpi_test
+   #SBATCH --nodes=2
+   #SBATCH --ntasks=4
+   #SBATCH --ntasks-per-node=2
+   #SBATCH --output=/home/mpiuser/shared/mpi_job_%j.out
+
+   module load mpi/openmpi-x86_64
+
+   echo "Job started at $(date)"
+   echo "Running on $(hostname)"
+
+   # 공유 디렉토리 경로로 실행
+   srun /home/mpiuser/shared/mpi_hello
+
+   echo "Job completed at $(date)"
+   EOF
+   ```
+
+4. 권한 설정
+   ```bash
+   chown mpiuser:mpiuser /home/mpiuser/shared/job.slurm
+   ```
+
+5. 작업 제출
+   ```bash
+   cd /home/mpiuser/shared
+   sbatch job.slurm
+   ```
+
 #### C. 또는 수동 파일 복사 방법
 
 1. 각 컴퓨트 노드에 실행 파일 복사
@@ -114,9 +154,7 @@ slurmstepd: error: execve(): /root/./mpi_hello: No such file or directory
    scp mpi_hello root@computenode:/root/
    ```
 
-### 3. SLURM 작업 스크립트 설정
-
-1. 절대 경로를 사용한 작업 스크립트 생성
+2. 작업 스크립트 수정
    ```bash
    cat > job.slurm << 'EOF'
    #!/bin/bash
@@ -131,22 +169,18 @@ slurmstepd: error: execve(): /root/./mpi_hello: No such file or directory
    echo "Job started at $(date)"
    echo "Running on $(hostname)"
 
-   # 절대 경로로 실행
-   srun /root/mpi_hello  # 또는 /home/mpiuser/shared/mpi_hello
+   # 각 노드의 로컬 경로로 실행
+   srun /root/mpi_hello
 
    echo "Job completed at $(date)"
    EOF
    ```
 
-2. 작업 제출
-   ```bash
-   sbatch job.slurm
-   ```
+### 3. 작업 결과 확인
 
-3. 작업 상태 확인
-   ```bash
-   squeue
-   ```
+```bash
+cat /home/mpiuser/shared/mpi_job_*.out
+```
 
 ## 참고: Root 권한으로 MPI 실행 시 주의사항
 
@@ -161,5 +195,12 @@ MPI는 root 사용자로 실행을 권장하지 않지만, 필요한 경우 다�
    ```bash
    export OMPI_ALLOW_RUN_AS_ROOT=1
    export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+   mpirun -np 4 ./my_program
+   ```
+
+3. 또는 비-루트 사용자 생성 및 사용
+   ```bash
+   adduser mpiuser
+   su - mpiuser
    mpirun -np 4 ./my_program
    ```
